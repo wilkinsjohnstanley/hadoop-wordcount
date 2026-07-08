@@ -2,6 +2,14 @@
 
 A minimal single-node Hadoop pipeline: text file → HDFS → MapReduce word count → HDFS output.
 
+## The Big Picture
+- This is the same architecture used for real batch jobs at scale.
+- Our one-line **sample.txt** on 1 datanode would be terabytes of log files split across hundreds of datanodes.
+- HDFS splits big files into blocks (default 128MB each) distributed across nodes. Each mapper processes one block, in parallel, on the node that already holds that data.
+- The MapReduce logic is the same whether it's 40 bytes or 40 terabytes. Hadoop splits work amongst the nodes, data is shuffled, and bingo! The job has read the entire input, processed it, and the output has been written when the program exits out.
+- The combiner we use matters **quite a bit more** at scale. Without it, every single word gets shuffled across the network individually; with millions of records, that's a massive bandwidth difference.
+- The Raw MapReduce we see in this project is the low-level foundation. In practice today, most people don't hand-write Mapper/Reducer classes. Instead, they use high-level tools such as Hive, Spark, and Pig, which compile down to similar distributed batch jobs but with SQL-like or more expressive APIs. Understanding MapReduce is still valuable because it's the mental model underneath those tools. 
+
 ## Environment
 
 - Windows + Docker Desktop (WSL2 backend)
